@@ -1,0 +1,46 @@
+
+body {
+    background-color: #a3aab3; 
+}
+
+.btn-add-product {
+    background-color: #35c0f7; 
+    border-color: #0056b3;
+    color: white;
+}
+
+.btn-add-product:hover {
+    background-color: #364c63 ;
+    border-color: #004085;
+}
+
+.modal-content {
+    background-color: #c5d7ff; 
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.custom-navbar {
+    background-color: #05253a;
+    border-bottom: 2px solid #0b413b;
+}
+
+.custom-navbar .navbar-brand, 
+.custom-navbar .nav-link {
+    color: rgb(167, 247, 250) ;
+}
+
+/* Cambiar color al pasar el mouse */
+.custom-navbar .nav-link:hover {
+    color: white ;
+}
+
+.modal-body {
+    background-color: #f8f9fa; 
+}
+
+
+.modal-footer {
+    background-color: #f8f9fa;
+}
+
