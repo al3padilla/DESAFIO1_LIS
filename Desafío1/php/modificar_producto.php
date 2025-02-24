@@ -48,7 +48,7 @@ function validarImagen($imagen) {
 function guardarImagen($imagen) {
     $directorioImagenes = '../imagenes/';
     if (!file_exists($directorioImagenes)) {
-        mkdir($directorioImagenes, 0777, true);  // Crear la carpeta si no existe
+        mkdir($directorioImagenes, 0777, true);
     }
 
     $extension = pathinfo($imagen['name'], PATHINFO_EXTENSION);
@@ -58,7 +58,6 @@ function guardarImagen($imagen) {
     return $rutaImagen;
 }
 
-// Cargar el archivo XML
 $xmlFile = '../productos.xml';
 if (file_exists($xmlFile)) {
     $xml = simplexml_load_file($xmlFile);
@@ -66,7 +65,6 @@ if (file_exists($xmlFile)) {
     die("No se pudo cargar el archivo XML.");
 }
 
-// Buscar el producto por código
 if (isset($_GET['codigo'])) {
     $codigoProducto = $_GET['codigo'];
     $productoEncontrado = null;
@@ -81,46 +79,38 @@ if (isset($_GET['codigo'])) {
     }
 }
 
-// Inicializar variables
 $errores = [];
 
-// Procesar el formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Validar los datos
-    $codigo = $_POST['codigo'];
-    $nombre = $_POST['nombre'];
-    $descripcion = $_POST['descripcion'];
-    $precio = $_POST['precio'];
-    $existencias = $_POST['existencias'];
-    $imagen = $_FILES['imagen'];
+    $codigo = $_POST['codigo'] ?? '';
+    $nombre = $_POST['nombre'] ?? '';
+    $descripcion = $_POST['descripcion'] ?? '';
+    $precio = $_POST['precio'] ?? '';
+    $existencias = $_POST['existencias'] ?? '';
+    $imagen = $_FILES['imagen'] ?? null;
+    $categoria = $_POST['categoria'] ?? '';
 
-    // Validar los datos con las funciones
-    $errores[] = validarCodigo($codigo);
-    $errores[] = validarNombre($nombre);
-    $errores[] = validarDescripcion($descripcion);
-    $errores[] = validarPrecio($precio);
-    $errores[] = validarExistencias($existencias);
-    $errores[] = validarImagen($imagen);
+    $errores['codigo'] = validarCodigo($codigo);
+    $errores['nombre'] = validarNombre($nombre);
+    $errores['descripcion'] = validarDescripcion($descripcion);
+    $errores['precio'] = validarPrecio($precio);
+    $errores['existencias'] = validarExistencias($existencias);
+    $errores['imagen'] = validarImagen($imagen);
 
-    // Filtrar errores nulos
     $errores = array_filter($errores);
-    
-    // Si no hay errores, actualizar el producto
+
     if (empty($errores)) {
         $productoEncontrado->codigo = $codigo;
         $productoEncontrado->nombre = $nombre;
         $productoEncontrado->descripcion = $descripcion;
-        
-        // Si se carga una nueva imagen
-        if ($imagen['error'] == 0) {
-            $productoEncontrado->imagen = guardarImagen($imagen);
-        }
-        
-        $productoEncontrado->categoria = $_POST['categoria'];
+        $productoEncontrado->categoria = $categoria;
         $productoEncontrado->precio = $precio;
         $productoEncontrado->existencias = $existencias;
 
-        // Guardar el XML
+        if ($imagen['error'] == 0) {
+            $productoEncontrado->imagen = guardarImagen($imagen);
+        }
+
         $xml->asXML($xmlFile);
 
         header('Location:index.php');
@@ -148,36 +138,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="container mt-4">
         <h2 class="text-center">Modificar Producto</h2>
 
-        <!-- Mostrar errores -->
-        <?php if (!empty($errores)): ?>
-            <div class="alert alert-danger">
-                <ul>
-                    <?php foreach ($errores as $error): ?>
-                        <li><?php echo $error; ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
-
         <form method="POST" enctype="multipart/form-data">
             <div class="mb-3">
                 <label class="form-label">Código del Producto</label>
-                <input type="text" class="form-control" name="codigo" value="<?php echo $productoEncontrado->codigo; ?>" required>
+                <input type="text" class="form-control <?php echo isset($errores['codigo']) ? 'is-invalid' : ''; ?>" name="codigo" value="<?php echo htmlspecialchars($productoEncontrado->codigo); ?>" readonly>
+                <div class="invalid-feedback"><?php echo $errores['codigo'] ?? ''; ?></div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Nombre</label>
-                <input type="text" class="form-control" name="nombre" value="<?php echo $productoEncontrado->nombre; ?>" required>
+                <input type="text" class="form-control <?php echo isset($errores['nombre']) ? 'is-invalid' : ''; ?>" name="nombre" value="<?php echo htmlspecialchars($productoEncontrado->nombre); ?>">
+                <div class="invalid-feedback"><?php echo $errores['nombre'] ?? ''; ?></div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Descripción</label>
-                <textarea class="form-control" name="descripcion" required><?php echo $productoEncontrado->descripcion; ?></textarea>
+                <textarea class="form-control <?php echo isset($errores['descripcion']) ? 'is-invalid' : ''; ?>" name="descripcion"><?php echo htmlspecialchars($productoEncontrado->descripcion); ?></textarea>
+                <div class="invalid-feedback"><?php echo $errores['descripcion'] ?? ''; ?></div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Imagen</label>
-                <input type="file" class="form-control" name="imagen" accept=".jpg, .png">
+                <input type="file" class="form-control <?php echo isset($errores['imagen']) ? 'is-invalid' : ''; ?>" name="imagen" accept=".jpg, .png">
                 <small class="text-muted">Formatos permitidos: .jpg, .png</small>
-                <?php if ($productoEncontrado->imagen): ?>
-                    <p>Imagen actual: <img src="<?php echo $productoEncontrado->imagen; ?>" width="100"></p>
+                <div class="invalid-feedback"><?php echo $errores['imagen'] ?? ''; ?></div>
+                <?php if (!empty($productoEncontrado->imagen)): ?>
+                    <p>Imagen actual: <img src="<?php echo htmlspecialchars($productoEncontrado->imagen); ?>" width="100"></p>
                 <?php endif; ?>
             </div>
             <div class="mb-3">
@@ -189,11 +172,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
             <div class="mb-3">
                 <label class="form-label">Precio</label>
-                <input type="number" class="form-control" name="precio" value="<?php echo $productoEncontrado->precio; ?>" step="0.01" required>
+                <input type="text" class="form-control <?php echo isset($errores['precio']) ? 'is-invalid' : ''; ?>" name="precio" value="<?php echo htmlspecialchars($productoEncontrado->precio); ?>">
+                <div class="invalid-feedback"><?php echo $errores['precio'] ?? ''; ?></div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Existencias</label>
-                <input type="number" class="form-control" name="existencias" value="<?php echo $productoEncontrado->existencias; ?>" min="0" required>
+                <input type="text" class="form-control <?php echo isset($errores['existencias']) ? 'is-invalid' : ''; ?>" name="existencias" value="<?php echo htmlspecialchars($productoEncontrado->existencias); ?>">
+                <div class="invalid-feedback"><?php echo $errores['existencias'] ?? ''; ?></div>
             </div>
             <button type="submit" class="btn btn-success">Actualizar Producto</button>
         </form>
